@@ -1,1 +1,5 @@
-# 
+# 1（只涉及gem5）AtomicSimpleCPU在仿真运行时会在EventQueue中触发哪些事件，这些事件是在运行时由哪些函数触发的？这些事件被调用时运行的函数是什么?
+答:
+- 
+- 事件调用运行的函数是tickEvent.scheduled(); 
+[ref1](http://www.gem5.org/docs/html/atomic_8cc_source.html)
