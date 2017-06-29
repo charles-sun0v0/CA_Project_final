@@ -7,3 +7,7 @@
 
 # 2只涉及gem5）AtomicSimpleCPU中，访问内存的指令和不访问内存的指令是否消耗相同的时间？使用AtomicSimpleCPU任意仿真一个程序，并使用SimpleCPU这个debug flag输出单周期处理器时间信息，从输出中观察每一个指令消耗的周期。观察AtomicSimpleCPU::tick()函数，找到统计访问内存时间的部分，为什么虽然AtomicSimpleCPU计算了访存时间但是在仿真中没有体现？如果要在仿真中体现访问内存花费的时间，需要怎么做？
 答：
+```
+build/ARM/gem5.debug --debug-flags=SimpleCPU configs/example/se.py -c tests/test-progs/hello/bin/arm/linux/hello>q2.txt --cpu-type=AtomicSimpleCPU
+
+```
