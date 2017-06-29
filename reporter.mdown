@@ -6,8 +6,29 @@
 > TBD：触发哪些事件这是通过class AtomicSimpleCPU 的成员函数来看的吗？
 
 # 2只涉及gem5）AtomicSimpleCPU中，访问内存的指令和不访问内存的指令是否消耗相同的时间？使用AtomicSimpleCPU任意仿真一个程序，并使用SimpleCPU这个debug flag输出单周期处理器时间信息，从输出中观察每一个指令消耗的周期。观察AtomicSimpleCPU::tick()函数，找到统计访问内存时间的部分，为什么虽然AtomicSimpleCPU计算了访存时间但是在仿真中没有体现？如果要在仿真中体现访问内存花费的时间，需要怎么做？
-答：
+答： 访问内存的指令和不访问内存的指令消耗相同的时间。
+
 ```
 build/ARM/gem5.debug --debug-flags=SimpleCPU configs/example/se.py -c tests/test-progs/hello/bin/arm/linux/hello>q2.txt --cpu-type=AtomicSimpleCPU
 
 ```
+void AtomicSimpleCPU::tick	() 	[private] Definition at line 510 of file atomic.cc.[ref2](http://www.gem5.org/docs/html/atomic_8cc_source.html)
+在 atomic.cc 的源代码中，访存时间的代码
+
+```
+         Tick stall_ticks = 0;
+           if (simulate_inst_stalls && icache_access)
+              stall_ticks += icache_latency;
+
+           if (simulate_data_stalls && dcache_access)
+              stall_ticks += dcache_latency;
+```
+同时在 AtomicSimpleCPU 中，关于 simulate_inst_stalls 和 simulate_data_stalls的设置如下：
+```
+    simulate_data_stalls = Param.Bool(False, "Simulate dcache stall cycles")
+    simulate_inst_stalls = Param.Bool(False, "Simulate icache stall cycles")
+```
+所以访存时间都没有加到stall_ticks中，若要在仿真中体现访问内存花费的时间，需要把simulate_data_stalls、simulate_inst_stalls 计算进去，即把这些参数赋值为True。
+
+
+# 3 使用gem5-nvp的默认脚本simple_engy.py仿真任意程序，观察系统状态机是如何通知CPU模块系统发生了状态变化（需要看engy/engy_mgmt.*），可以添加仿真Debug Flag：EnergyMgmt并观察输出结果。需要关注EnergyMgmt如何发出这些信息，AtomicSimpleCPU如何接收这些信息?
