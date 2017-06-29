@@ -9,7 +9,7 @@
 答： 访问内存的指令和不访问内存的指令消耗相同的时间。
 
 ```
-build/ARM/gem5.debug --debug-flags=SimpleCPU configs/example/se.py -c tests/test-progs/hello/bin/arm/linux/hello>q2.txt --cpu-type=AtomicSimpleCPU
+build/ARM/gem5.debug --debug-flags=SimpleCPU --debug-file=a.out configs/example/se.py -c tests/test-progs/hello/bin/arm/linux/hello --cpu-type=AtomicSimpleCPU
 
 ```
 void AtomicSimpleCPU::tick	() 	[private] Definition at line 510 of file atomic.cc.[ref2](http://www.gem5.org/docs/html/atomic_8cc_source.html)
@@ -32,3 +32,18 @@ void AtomicSimpleCPU::tick	() 	[private] Definition at line 510 of file atomic.c
 
 
 # 3 使用gem5-nvp的默认脚本simple_engy.py仿真任意程序，观察系统状态机是如何通知CPU模块系统发生了状态变化（需要看engy/engy_mgmt.*），可以添加仿真Debug Flag：EnergyMgmt并观察输出结果。需要关注EnergyMgmt如何发出这些信息，AtomicSimpleCPU如何接收这些信息?
+答：
+
+```
+build/ARM/gem5.debug --debug-flags=EergyMgmt --debug-file=a.out configs/example/simple_engy.py -c tests/test-progs/hello/bin/arm/linux/hello 
+```
+通过输出信息可以知道，EnergyMgmt 通过 Energy Ports连接CPU. port 是成对出现的，分为master和slave，这里 master: system.energy_mgmt, slave: system.cpu.
+在脚本 simple_engy.py 中，
+```
+system.energy_mgmt = EnergyMgmt(path_energy_profile = 'profile/energy_prof',
+				energy_time_unit = '10us')
+system.cpu.s_energy_port = system.energy_mgmt.m_energy_port
+
+```
+这表面，在仿真系统中，EnergyMgmt 初始化加载Energy profile, CPU 的slave energy port 连接到 EnergyMgmt 的master enengy_port.
+
