@@ -35,7 +35,7 @@ void AtomicSimpleCPU::tick	() 	[private] Definition at line 510 of file atomic.c
 答：
 
 ```shell
-build/ARM/gem5.debug --debug-flags=EergyMgmt --debug-file=a.out configs/example/simple_engy.py -c tests/test-progs/hello/bin/arm/linux/hello 
+build/ARM/gem5.debug --debug-flags=EnergyMgmt --debug-file=a.out configs/example/simple_engy.py -c tests/test-progs/hello/bin/arm/linux/hello 
 ```
 通过输出信息可以知道，EnergyMgmt 通过 Energy Ports连接CPU. port 是成对出现的，分为master和slave，这里 master: system.energy_mgmt, slave: system.cpu.
 在脚本 simple_engy.py 中，
@@ -49,5 +49,24 @@ system.cpu.s_energy_port = system.energy_mgmt.m_energy_port
 
 [ref](https://github.com/zlfben/gem5/wiki/Concepts-and-Structure)
 
-# 4 4 修改simple_engy.py，使用TwoThresSM状态机（参考https://github.com/zlfben/gem5/wiki/Concepts-and-Structure#Energy-Management-Module-State-Machine的内容，设置energy_mgmt的state_machine变量为TwoThresSM()）进行仿真，仿真程序可以是任意的，比如ARM编译的八皇后，为状态机设定20000单位的上阈值（开机阈值）和10000单位的下阈值（关机阈值），观察仿真结果，设定方式可以查看TwoThresSM类的python端定义。
+# 4 修改simple_engy.py，使用TwoThresSM状态机（[参考](https://github.com/zlfben/gem5/wiki/Concepts-and-Structure#Energy-Management-Module-State-Machine)的内容，设置energy_mgmt的state_machine变量为TwoThresSM()）进行仿真，仿真程序可以是任意的，比如ARM编译的八皇后，为状态机设定20000单位的上阈值（开机阈值）和10000单位的下阈值（关机阈值），观察仿真结果，设定方式可以查看TwoThresSM类的python端定义。
+
+答： 修改的 simple_engy.py 保存为 src/sim_engy_4.py; 交叉编译生成的八皇后 ARM 可执行文件为 queens_arm (注意需要静态编译). 
+
+将脚本和可执行文件放到 gem5_nvp/gem5 下，执行
+
+```
+build/ARM/gem5.debug --debug-flags=EnergyMgmt --debug-file=q4.out sim_engy_4.py
+```
+分析 Debug 输出文件 q4.out ，可以得到以下信息
+```
+27620000000: system.energy_mgmt.state_machine: State change: off->on state=1, _energy=20004, thres_high=20000
+27620000000: system.cpu: AtomicSimpleCPU handleMsg called at 27620000000, msg.type=2
+……
+452029000000: system.energy_mgmt.state_machine: State change: on->off state=2, _energy=9999.07, thres_low=10000
+452029000000: system.cpu: AtomicSimpleCPU handleMsg called at 452029000000, msg.type=1
+
+```
+所以在双门限下， 能量超过20000时，系统状态变化为 off-> on, 能量低于10000时，系统状态变换为 on -> off.
+
 [ref](https://github.com/zlfben/gem5/wiki/Example-1)
