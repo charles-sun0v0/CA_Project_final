@@ -71,12 +71,13 @@ build/ARM/gem5.debug --debug-flags=EnergyMgmt --debug-file=q4.out sim_engy_4.py
 
 [ref](https://github.com/zlfben/gem5/wiki/Example-1)
 
-# 5 请完成上文所述DFS系统，设定为10000单位，为20000单位，你需要创建一个新的状态机模块，关于状态机模块，请参考https://github.com/zlfben/gem5/wiki/Concepts-and-Structure#Energy-Management-Module-State-Machine中的内容，有关如何添加新模块，请参考https://github.com/zlfben/gem5/wiki/Example-1中描述TwoThresSM创建的部分，当前TwoThresSM已经集成到Gem5-NVP中，不需要用户创建，你需要自行创建一个满足DFS系统要求的状态机。除此之外，还需要在AtomicSimpleCPU中编写接收到状态转移信息时的操作，在接收到响应操作时修改系统频率。为了测试上的容易，可以把高频率设定为1MHz，低频率设定为500kHz.
+# 5 请完成上文所述DFS系统，设定为10000单位，为20000单位，你需要创建一个新的状态机模块，关于状态机模块，[请参考1](https://github.com/zlfben/gem5/wiki/Concepts-and-Structure#Energy-Management-Module-State-Machine)中的内容，有关如何添加新模块，[请参考2](https://github.com/zlfben/gem5/wiki/Example-1)中描述TwoThresSM创建的部分，当前TwoThresSM已经集成到Gem5-NVP中，不需要用户创建，你需要自行创建一个满足DFS系统要求的状态机。除此之外，还需要在AtomicSimpleCPU中编写接收到状态转移信息时的操作，在接收到响应操作时修改系统频率。为了测试上的容易，可以把高频率设定为1MHz，低频率设定为500kHz.
 答： 参照...，增加的文件有 gem5/src/engy中添加， DFS_SM.py, dfs_sm.cc, dfs_sm.hh; 在 gem5/build/ARM/params中增加 Dfs_SM.hh；修改的文件有gem5/src/engy/SConscript, 这些文件被上传到了github repo的 src/engy/ 中。
 还需要修改的是 
--[] atomic.cc
--[] 重新编译
--[] 仿真
+
+- [] atomic.cc
+- [] 重新编译
+- [] 仿真
 
 [reference](https://github.com/zlfben/gem5/wiki/Example-1)
 
