@@ -78,7 +78,13 @@ build/ARM/gem5.debug --debug-flags=EnergyMgmt --debug-file=q4.out sim_engy_4.py
 - [x] atomic.cc 增加了CPU时钟频率的修改，使用了 trick， 通过修改CCT“好像”修改了时钟频率，实现高低频率转换，但事实上并没有在clockdomain进行修改
 - [x] 重新编译
 - [x] 仿真
+
 对预置的 profile 进行仿真八皇后问题，通过低频运行避免了运行的过程中的关机问题，但是比较与TwoThresh比较，在运行时间上没有优势，这与外界能量供应有关（即profie）.
+
+仿真脚本为 sim_engy_5.py
+```
+build/ARM/gem5.debug --debug-flags=EnergyMgmt --debug-file=q5.out sim_engy_5.py
+```
 
 |八皇后问题|TwoThreshSM|DFS_SM|
 |----|-----|----|
