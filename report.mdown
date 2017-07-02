@@ -1,18 +1,21 @@
-# 1（只涉及gem5）AtomicSimpleCPU在仿真运行时会在EventQueue中触发哪些事件，这些事件是在运行时由哪些函数触发的？这些事件被调用时运行的函数是什么?
-答:
-- 
-- 事件调用运行的函数是tickEvent.scheduled(); 
+# DFS 系统设计
+[TOC]
+## 1（只涉及gem5）AtomicSimpleCPU在仿真运行时会在EventQueue中触发哪些事件，这些事件是在运行时由哪些函数触发的？这些事件被调用时运行的函数是什么?
+答: 
+- 主要触发的时间就是 tickEvent;
+- 运行时可以触发的函数有 atomic.cc 中的 AtomicSimpleCPU::tick(), AtomicSimpleCPU::handleMsg(), AtomicSimpleCPU::drainResume(),AtomicSimpleCPU::activeContext()
+- 事件调用运行的函数是 scheduled(); 
 [ref1](http://www.gem5.org/docs/html/atomic_8cc_source.html)
-> TBD：触发哪些事件这是通过class AtomicSimpleCPU 的成员函数来看的吗？
 
-# 2只涉及gem5）AtomicSimpleCPU中，访问内存的指令和不访问内存的指令是否消耗相同的时间？使用AtomicSimpleCPU任意仿真一个程序，并使用SimpleCPU这个debug flag输出单周期处理器时间信息，从输出中观察每一个指令消耗的周期。观察AtomicSimpleCPU::tick()函数，找到统计访问内存时间的部分，为什么虽然AtomicSimpleCPU计算了访存时间但是在仿真中没有体现？如果要在仿真中体现访问内存花费的时间，需要怎么做？
+
+## 2只涉及gem5）AtomicSimpleCPU中，访问内存的指令和不访问内存的指令是否消耗相同的时间？使用AtomicSimpleCPU任意仿真一个程序，并使用SimpleCPU这个debug flag输出单周期处理器时间信息，从输出中观察每一个指令消耗的周期。观察AtomicSimpleCPU::tick()函数，找到统计访问内存时间的部分，为什么虽然AtomicSimpleCPU计算了访存时间但是在仿真中没有体现？如果要在仿真中体现访问内存花费的时间，需要怎么做？
 答： 访问内存的指令和不访问内存的指令消耗相同的时间。
 
 ```
 build/ARM/gem5.debug --debug-flags=SimpleCPU --debug-file=a.out configs/example/se.py -c tests/test-progs/hello/bin/arm/linux/hello --cpu-type=AtomicSimpleCPU
 
 ```
-void AtomicSimpleCPU::tick	() 	[private] Definition at line 510 of file atomic.cc.[ref2](http://www.gem5.org/docs/html/atomic_8cc_source.html)
+void AtomicSimpleCPU::tick	() 	 Definition at line 510 of file atomic.cc.[ref2](http://www.gem5.org/docs/html/atomic_8cc_source.html)
 在 atomic.cc 的源代码中，访存时间的代码
 
 ```
@@ -31,7 +34,7 @@ void AtomicSimpleCPU::tick	() 	[private] Definition at line 510 of file atomic.c
 所以访存时间都没有加到stall_ticks中，若要在仿真中体现访问内存花费的时间，需要把simulate_data_stalls、simulate_inst_stalls 计算进去，即把这些参数赋值为True。
 
 
-# 3 使用gem5-nvp的默认脚本simple_engy.py仿真任意程序，观察系统状态机是如何通知CPU模块系统发生了状态变化（需要看engy/engy_mgmt.*），可以添加仿真Debug Flag：EnergyMgmt并观察输出结果。需要关注EnergyMgmt如何发出这些信息，AtomicSimpleCPU如何接收这些信息?
+## 3 使用gem5-nvp的默认脚本simple_engy.py仿真任意程序，观察系统状态机是如何通知CPU模块系统发生了状态变化（需要看engy/engy_mgmt.*），可以添加仿真Debug Flag：EnergyMgmt并观察输出结果。需要关注EnergyMgmt如何发出这些信息，AtomicSimpleCPU如何接收这些信息?
 答：
 
 ```shell
@@ -49,7 +52,7 @@ system.cpu.s_energy_port = system.energy_mgmt.m_energy_port
 
 [ref](https://github.com/zlfben/gem5/wiki/Concepts-and-Structure)
 
-# 4 修改simple_engy.py，使用TwoThresSM状态机（[参考](https://github.com/zlfben/gem5/wiki/Concepts-and-Structure#Energy-Management-Module-State-Machine)的内容，设置energy_mgmt的state_machine变量为TwoThresSM()）进行仿真，仿真程序可以是任意的，比如ARM编译的八皇后，为状态机设定20000单位的上阈值（开机阈值）和10000单位的下阈值（关机阈值），观察仿真结果，设定方式可以查看TwoThresSM类的python端定义。
+## 4 修改simple_engy.py，使用TwoThresSM状态机（[参考](https://github.com/zlfben/gem5/wiki/Concepts-and-Structure#Energy-Management-Module-State-Machine)的内容，设置energy_mgmt的state_machine变量为TwoThresSM()）进行仿真，仿真程序可以是任意的，比如ARM编译的八皇后，为状态机设定20000单位的上阈值（开机阈值）和10000单位的下阈值（关机阈值），观察仿真结果，设定方式可以查看TwoThresSM类的python端定义。
 
 答： 修改的 simple_engy.py 保存为 src/sim_engy_4.py; 交叉编译生成的八皇后 ARM 可执行文件为 queens_arm (注意需要静态编译). 
 
@@ -71,7 +74,7 @@ build/ARM/gem5.debug --debug-flags=EnergyMgmt --debug-file=q4.out sim_engy_4.py
 
 [ref](https://github.com/zlfben/gem5/wiki/Example-1)
 
-# 5 请完成上文所述DFS系统，设定为10000单位，为20000单位，你需要创建一个新的状态机模块，关于状态机模块，[请参考1](https://github.com/zlfben/gem5/wiki/Concepts-and-Structure#Energy-Management-Module-State-Machine)中的内容，有关如何添加新模块，[请参考2](https://github.com/zlfben/gem5/wiki/Example-1)中描述TwoThresSM创建的部分，当前TwoThresSM已经集成到Gem5-NVP中，不需要用户创建，你需要自行创建一个满足DFS系统要求的状态机。除此之外，还需要在AtomicSimpleCPU中编写接收到状态转移信息时的操作，在接收到响应操作时修改系统频率。为了测试上的容易，可以把高频率设定为1MHz，低频率设定为500kHz.
+## 5 请完成上文所述DFS系统，设定为10000单位，为20000单位，你需要创建一个新的状态机模块，关于状态机模块，[请参考1](https://github.com/zlfben/gem5/wiki/Concepts-and-Structure#Energy-Management-Module-State-Machine)中的内容，有关如何添加新模块，[请参考2](https://github.com/zlfben/gem5/wiki/Example-1)中描述TwoThresSM创建的部分，当前TwoThresSM已经集成到Gem5-NVP中，不需要用户创建，你需要自行创建一个满足DFS系统要求的状态机。除此之外，还需要在AtomicSimpleCPU中编写接收到状态转移信息时的操作，在接收到响应操作时修改系统频率。为了测试上的容易，可以把高频率设定为1MHz，低频率设定为500kHz.
 答： 参照...，增加的文件有 gem5/src/engy中添加， DFS_SM.py, dfs_sm.cc, dfs_sm.hh; 在 gem5/build/ARM/params中增加 Dfs_SM.hh；修改的文件有gem5/src/engy/SConscript, 这些文件被上传到了github repo的 src/engy/ 中。
 还需要修改的是 
 
@@ -79,7 +82,7 @@ build/ARM/gem5.debug --debug-flags=EnergyMgmt --debug-file=q4.out sim_engy_4.py
 - [x] 重新编译
 - [x] 仿真
 
-对预置的 profile 进行仿真八皇后问题，通过低频运行避免了运行的过程中的关机问题，但是比较与TwoThresh比较，在运行时间上没有优势，这与外界能量供应有关（即profie）.
+对预置的 profile 进行仿真八皇后问题，通过低频运行避免了运行的过程中的关机问题，但是比较与TwoThresh比较，在运行时间上没有优势，这与外界能量供应有关（即profie）, 也与重新开机的的代价有关（这部分是自由设置的）.
 
 仿真脚本为 sim_engy_5.py
 ```
@@ -89,7 +92,7 @@ build/ARM/gem5.debug --debug-flags=EnergyMgmt --debug-file=q5.out sim_engy_5.py
 |八皇后问题|TwoThreshSM|DFS_SM|
 |----|-----|----|
 |sim_seconds|0.490011    |0.502982|
-||||
+
 
 [reference](https://github.com/zlfben/gem5/wiki/Example-1)
 
